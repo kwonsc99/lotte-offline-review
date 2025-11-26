@@ -36,8 +36,8 @@ export default function ProductPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       {/* 헤더 */}
-      <div className="max-w-2xl mx-auto mb-8">
-        <div className="flex items-center justify-between bg-white px-6 py-4 rounded-xl shadow-sm">
+      <div className="max-w-2xl mx-auto shadow-lg">
+        <div className="flex items-center justify-between bg-white px-6 py-4 shadow-lg">
           <h1 className="text-xl font-bold text-gray-900">롯데백화점 리뷰</h1>
           <div className="flex gap-3">
             <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
@@ -51,7 +51,7 @@ export default function ProductPage() {
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+      <div className="max-w-2xl mx-auto bg-white shadow-lg p-8">
         {/* 탭 */}
 
         {/* 휴대폰 번호 입력 */}
