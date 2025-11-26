@@ -2,56 +2,73 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { translations } from "@/lib/translations";
 
 export default function SurveyPage() {
   const router = useRouter();
-  const [answers, setAnswers] = useState({
-    satisfaction: "",
-    comfort: [],
-    usage: [],
-    color: "",
-  });
+  const [language, setLanguage] = useState("ko");
+  const [satisfaction, setSatisfaction] = useState("");
+  const [comfort, setComfort] = useState([]);
+  const [usage, setUsage] = useState([]);
+  const [color, setColor] = useState("");
 
-  const toggleMultiSelect = (category, value) => {
-    setAnswers((prev) => {
-      const current = prev[category];
-      if (current.includes(value)) {
-        return { ...prev, [category]: current.filter((v) => v !== value) };
-      } else {
-        return { ...prev, [category]: [...current, value] };
-      }
-    });
+  const t = translations[language].survey;
+
+  const languages = [
+    { code: "ko", name: "한국어", flag: "🇰🇷" },
+    { code: "zh", name: "中文", flag: "🇨🇳" },
+    { code: "ja", name: "日本語", flag: "🇯🇵" },
+    { code: "en", name: "English", flag: "🇺🇸" },
+  ];
+
+  const toggleComfort = (value) => {
+    setComfort((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
+  };
+
+  const toggleUsage = (value) => {
+    setUsage((prev) =>
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value]
+    );
   };
 
   const handleSubmit = () => {
-    if (!answers.satisfaction) {
-      alert("만족도를 선택해주세요.");
+    if (!satisfaction) {
+      alert(
+        language === "ko"
+          ? "만족도를 선택해주세요."
+          : language === "zh"
+          ? "请选择满意度。"
+          : language === "ja"
+          ? "満足度を選択してください。"
+          : "Please select satisfaction level."
+      );
       return;
     }
 
-    localStorage.setItem("surveyAnswers", JSON.stringify(answers));
+    const surveyData = {
+      satisfaction,
+      comfort,
+      usage,
+      color,
+      language,
+    };
+
+    localStorage.setItem("surveyAnswers", JSON.stringify(surveyData));
     router.push("/tablet/generating");
   };
 
-  const TagButton = ({ selected, onClick, children }) => (
-    <button
-      onClick={onClick}
-      className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${
-        selected
-          ? "bg-pink-600 text-white shadow-md"
-          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-      }`}
-    >
-      {children}
-    </button>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 p-8">
       {/* 헤더 */}
       <div className="max-w-2xl mx-auto mb-8">
         <div className="flex items-center justify-between bg-white px-6 py-4 rounded-xl shadow-sm">
-          <h1 className="text-xl font-bold text-gray-900">롯데백화점</h1>
+          <h1 className="text-xl font-bold text-gray-900">롯데백화점 리뷰</h1>
           <div className="flex gap-3">
             <button className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
               👤
@@ -62,126 +79,212 @@ export default function SurveyPage() {
           </div>
         </div>
       </div>
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+        {/* 헤더 */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
+            <div className="flex-1 text-center">
+              <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-pink-600 text-white flex items-center justify-center text-sm font-bold">
+                ✓
+              </div>
+              <p className="text-xs text-gray-500">상품</p>
+            </div>
 
-      {/* 메인 컨텐츠 */}
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
-        {/* 탭 */}
-        <div className="flex gap-4 mb-8 border-b">
-          <button className="px-6 py-3 text-gray-500">상품</button>
-          <button className="px-6 py-3 text-pink-600 border-b-2 border-pink-600 font-semibold">
-            리뷰
-          </button>
-          <button className="px-6 py-3 text-gray-500">게시</button>
+            <div className="flex-1 h-px bg-gradient-to-r from-pink-600 to-pink-600 mt-[-20px]"></div>
+
+            <div className="flex-1 text-center">
+              <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white flex items-center justify-center text-sm font-bold shadow-lg">
+                2
+              </div>
+              <p className="text-xs font-bold text-pink-600">리뷰</p>
+            </div>
+
+            <div className="flex-1 h-px bg-gray-300 mt-[-20px]"></div>
+
+            <div className="flex-1 text-center">
+              <div className="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-sm font-bold">
+                3
+              </div>
+              <p className="text-xs text-gray-400">게시</p>
+            </div>
+          </div>
+        </div>
+        {/* 언어 선택 */}
+        <div className="mb-8 flex justify-end gap-2">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => setLanguage(lang.code)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                language === lang.code
+                  ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {lang.flag} {lang.name}
+            </button>
+          ))}
         </div>
 
-        {/* 상품 정보 (간단히) */}
-        <div className="flex items-center gap-4 mb-8 pb-6 border-b">
-          <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-            <div className="text-3xl">👟</div>
-          </div>
-          <div>
-            <h2 className="font-bold text-gray-900">아식스</h2>
-            <p className="text-sm text-gray-600">
-              노바블라스트 5 아식스 트랙클럽
-            </p>
-            <p className="text-lg font-bold text-gray-900">169,000원</p>
+        {/* 상품 정보 */}
+        <div className="mb-8">
+          <div className="flex gap-6">
+            <div className="w-48 h-48 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+              <img
+                src="https://contents.lotteon.com/itemimage/20251107100950/LE/12/20/40/52/54/_1/32/28/27/92/9/LE1220405254_1322827929_1.jpg/dims/resizef/554X554/format/webp/optimize"
+                alt="ASICS Novablast 5"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">아식스</h2>
+              <p className="text-gray-600 mb-4">
+                [아식스 본사] 노바블라스트 5 아식스 트랙클럽 112530225-100
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mb-2">169,000원</p>
+              <p className="text-sm text-gray-500">할인구매 200 · 리뷰 82</p>
+            </div>
           </div>
         </div>
 
-        {/* 설문 */}
-        <div className="space-y-8">
-          {/* 만족도 */}
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              리뷰 생성하기
+        {/* 1. 만족도 */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {t.satisfaction.title}
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              오늘 구매하신 상품에 만족하셨나요? (1점-5점)
-            </p>
+            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+              {t.satisfaction.required}
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center gap-4 p-8 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl">
             <div className="flex gap-3">
-              {["매우 불만족", "불만족", "보통", "만족", "매우 만족"].map(
-                (item) => (
-                  <TagButton
-                    key={item}
-                    selected={answers.satisfaction === item}
+              {[1, 2, 3, 4, 5].map((rating) => {
+                const ratingToSatisfaction = {
+                  1: t.satisfaction.options[4], // 매우 불만족
+                  2: t.satisfaction.options[3], // 불만족
+                  3: t.satisfaction.options[2], // 보통
+                  4: t.satisfaction.options[1], // 만족
+                  5: t.satisfaction.options[0], // 매우 만족
+                };
+
+                const selectedRating = Object.entries(
+                  ratingToSatisfaction
+                ).find(([_, value]) => value === satisfaction)?.[0];
+
+                return (
+                  <button
+                    key={rating}
                     onClick={() =>
-                      setAnswers((prev) => ({ ...prev, satisfaction: item }))
+                      setSatisfaction(ratingToSatisfaction[rating])
                     }
+                    className="transition-all hover:scale-110 focus:outline-none"
                   >
-                    {item}
-                  </TagButton>
-                )
-              )}
+                    <svg
+                      className={`w-14 h-14 transition-colors ${
+                        selectedRating && rating <= Number(selectedRating)
+                          ? "text-yellow-400 fill-current drop-shadow-lg"
+                          : "text-gray-300 fill-current hover:text-gray-400"
+                      }`}
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  </button>
+                );
+              })}
             </div>
           </div>
+        </div>
 
-          {/* 착용감 */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-3">
-              착용감
+        {/* 2. 착용감 */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {t.comfort.title}
             </h3>
-            <div className="flex flex-wrap gap-3">
-              {["편안함", "고급스러움", "시원함", "따뜻함", "가벼움"].map(
-                (item) => (
-                  <TagButton
-                    key={item}
-                    selected={answers.comfort.includes(item)}
-                    onClick={() => toggleMultiSelect("comfort", item)}
-                  >
-                    {item}
-                  </TagButton>
-                )
-              )}
-            </div>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full">
+              {t.comfort.multiple}
+            </span>
           </div>
-
-          {/* 상황별 활용도 */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-3">
-              상황별 활용도
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {["데일리", "출근", "데이트", "모임", "액티비티"].map((item) => (
-                <TagButton
-                  key={item}
-                  selected={answers.usage.includes(item)}
-                  onClick={() => toggleMultiSelect("usage", item)}
-                >
-                  {item}
-                </TagButton>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-3">
+            {t.comfort.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => toggleComfort(option)}
+                className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                  comfort.includes(option)
+                    ? "bg-pink-600 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* 컬러감 */}
-          <div>
-            <h3 className="text-base font-semibold text-gray-900 mb-3">
-              컬러감
+        {/* 3. 활용도 */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {t.usage.title}
             </h3>
-            <div className="flex flex-wrap gap-3">
-              {["사진보다 밝음", "사진과 같음", "사진보다 어두움"].map(
-                (item) => (
-                  <TagButton
-                    key={item}
-                    selected={answers.color === item}
-                    onClick={() =>
-                      setAnswers((prev) => ({ ...prev, color: item }))
-                    }
-                  >
-                    {item}
-                  </TagButton>
-                )
-              )}
-            </div>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full">
+              {t.usage.multiple}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {t.usage.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => toggleUsage(option)}
+                className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                  usage.includes(option)
+                    ? "bg-pink-600 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. 컬러감 */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {t.color.title}
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {t.color.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => setColor(option)}
+                className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                  color === option
+                    ? "bg-pink-600 text-white shadow-lg"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* 제출 버튼 */}
         <button
           onClick={handleSubmit}
-          className="w-full mt-8 bg-black text-white font-semibold py-4 rounded-xl text-lg hover:bg-gray-800 transition-colors"
+          disabled={!satisfaction}
+          className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${
+            satisfaction
+              ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white hover:from-pink-700 hover:to-purple-700 shadow-lg"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
         >
-          AI 리뷰 등록하기
+          {t.button}
         </button>
       </div>
     </div>

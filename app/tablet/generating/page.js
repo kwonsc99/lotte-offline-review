@@ -23,7 +23,10 @@ export default function GeneratingPage() {
         const surveyAnswers = JSON.parse(
           localStorage.getItem("surveyAnswers") || "{}"
         );
-        const review = generateReviewFromSurvey(surveyAnswers);
+        const review = generateReviewFromSurvey(
+          surveyAnswers,
+          surveyAnswers.language
+        ); // language 파라미터 추가
 
         setGeneratedReview(review);
         localStorage.setItem("generatedReview", review);
