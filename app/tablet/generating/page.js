@@ -26,7 +26,7 @@ export default function GeneratingPage() {
         const review = generateReviewFromSurvey(
           surveyAnswers,
           surveyAnswers.language
-        ); // language 파라미터 추가
+        );
 
         setGeneratedReview(review);
         localStorage.setItem("generatedReview", review);
@@ -52,13 +52,13 @@ export default function GeneratingPage() {
 
   if (status === "preview") {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-12">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-12">
           {/* 성공 헤더 */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
               <svg
-                className="w-8 h-8 text-blue-600"
+                className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -71,39 +71,41 @@ export default function GeneratingPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               리뷰가 생성되었습니다!
             </h2>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               생성된 리뷰를 확인하고, 등록해보세요!
             </p>
           </div>
 
           {/* 생성된 리뷰 카드 */}
-          <div className="bg-white rounded-2xl p-8 mb-6 border-2 border-gray-200">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 mb-6 border-2 border-gray-200">
             <div className="flex items-start gap-3 mb-4">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold text-gray-900">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
                     AI 생성 리뷰
                   </span>
-                  <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
                     자동 생성
                   </span>
                 </div>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
                   {generatedReview}
                 </p>
               </div>
             </div>
 
-            {/* 별점 (임의) */}
+            {/* 별점 */}
             <div className="flex items-center gap-1 mt-4 pt-4 border-t border-gray-200">
-              <span className="ml-2 text-sm text-gray-600">별점:</span>
+              <span className="ml-2 text-xs sm:text-sm text-gray-600">
+                별점:
+              </span>
               {[...Array(5)].map((_, i) => (
                 <svg
                   key={i}
-                  className="w-5 h-5 text-yellow-400 fill-current"
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 fill-current"
                   viewBox="0 0 20 20"
                 >
                   <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
@@ -115,7 +117,7 @@ export default function GeneratingPage() {
           {/* 안내 메시지 */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
             <div className="flex items-start gap-3">
-              <div className="text-sm text-gray-700">
+              <div className="text-xs sm:text-sm text-gray-700">
                 <p>
                   작성한 리뷰는 온라인 앱을 통해 수정하거나 삭제할 수 있습니다.
                 </p>
@@ -124,16 +126,16 @@ export default function GeneratingPage() {
           </div>
 
           {/* 버튼 */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => router.push("/tablet/survey")}
-              className="flex-1 bg-gray-100 text-gray-700 font-semibold py-4 rounded-xl hover:bg-gray-200 transition-colors"
+              className="flex-1 bg-gray-100 text-gray-700 font-semibold py-3 sm:py-4 rounded-xl hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm sm:text-base"
             >
               다시 작성
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-1 bg-black text-white font-semibold py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-colors shadow-lg"
+              className="flex-1 bg-black text-white font-semibold py-3 sm:py-4 rounded-xl hover:bg-gray-800 active:bg-gray-900 transition-colors shadow-lg text-sm sm:text-base"
             >
               확인 및 등록
             </button>
@@ -144,26 +146,30 @@ export default function GeneratingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-12 text-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 sm:p-12 text-center">
         {/* 로딩 애니메이션 */}
         <div className="mb-8">
-          <div className="w-24 h-24 mx-auto relative">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto relative">
             <div className="absolute inset-0 border-8 border-gray-200 rounded-full"></div>
             <div className="absolute inset-0 border-8 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
         </div>
 
         {/* 텍스트 */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
           AI가 리뷰를 생성하고 있습니다
         </h2>
-        <p className="text-gray-600 mb-2">고객님의 소중한 의견을 바탕으로</p>
-        <p className="text-gray-600">자연스러운 리뷰를 작성하고 있습니다</p>
+        <p className="text-sm sm:text-base text-gray-600 mb-2">
+          고객님의 소중한 의견을 바탕으로
+        </p>
+        <p className="text-sm sm:text-base text-gray-600">
+          자연스러운 리뷰를 작성하고 있습니다
+        </p>
 
         {/* 진행 상태 */}
         <div className="mt-8 space-y-3">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-gray-600">설문 분석 중</span>
             <span
               className={`font-semibold ${
@@ -177,7 +183,7 @@ export default function GeneratingPage() {
               )}
             </span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-gray-600">리뷰 생성 중</span>
             {status === "generating" ? (
               <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -187,7 +193,7 @@ export default function GeneratingPage() {
               <span className="text-gray-400">⋯</span>
             )}
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span
               className={
                 status === "complete" || status === "preview"
