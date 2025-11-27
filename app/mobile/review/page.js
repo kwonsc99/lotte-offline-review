@@ -50,7 +50,7 @@ export default function MobileReviewPage() {
   // 태그 생성
   const getTags = () => {
     const tags = [];
-    const { comfort, usage, color } = reviewData.surveyAnswers;
+    const { comfort, usage, color, size } = reviewData.surveyAnswers;
 
     if (comfort && comfort.length > 0) {
       comfort.forEach((item) => {
@@ -230,7 +230,11 @@ export default function MobileReviewPage() {
             </div>
 
             {/* 옵션 정보 */}
-            <div className="text-sm text-gray-500 mb-3">옵션 : 260</div>
+            {reviewData.surveyAnswers.size && (
+              <div className="text-sm text-gray-500 mb-3">
+                옵션 : {reviewData.surveyAnswers.size}
+              </div>
+            )}
 
             {/* 리뷰 내용 */}
             <div className="text-base text-gray-900 leading-relaxed mb-4 whitespace-pre-wrap">

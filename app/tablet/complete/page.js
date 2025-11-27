@@ -60,8 +60,9 @@ export default function CompletePage() {
         {/* 혜택 안내 */}
         <div className="mt-6 sm:mt-8 pt-6 border-t">
           <p className="text-xs sm:text-sm text-gray-600">
-            🎁 리뷰 작성 감사 L.POINT{" "}
-            <span className="font-bold text-blue-600">1500P</span> 적립 완료!
+            🎁{" "}
+            <span className="font-bold text-blue-600">리뷰 작성 감사 쿠폰</span>{" "}
+            발송 완료!
           </p>
         </div>
       </div>

@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { generateReviewFromSurvey } from "@/lib/generateReview";
 
 export default function GeneratingPage() {
   const router = useRouter();
-  const [status, setStatus] = useState("analyzing"); // analyzing -> generating -> complete -> preview
+  const [status, setStatus] = useState("analyzing");
   const [generatedReview, setGeneratedReview] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const generateReview = async () => {
@@ -18,15 +18,29 @@ export default function GeneratingPage() {
 
         // 2단계: 생성 중
         setStatus("generating");
-        await new Promise((resolve) => setTimeout(resolve, 1500));
 
         const surveyAnswers = JSON.parse(
           localStorage.getItem("surveyAnswers") || "{}"
         );
-        const review = generateReviewFromSurvey(
-          surveyAnswers,
-          surveyAnswers.language
-        );
+
+        // Gemini API 호출
+        const response = await fetch("/api/generate-review", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            surveyData: surveyAnswers,
+            language: surveyAnswers.language || "ko",
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("리뷰 생성에 실패했습니다.");
+        }
+
+        const data = await response.json();
+        const review = data.review;
 
         setGeneratedReview(review);
         localStorage.setItem("generatedReview", review);
@@ -39,12 +53,46 @@ export default function GeneratingPage() {
         setStatus("preview");
       } catch (error) {
         console.error("리뷰 생성 오류:", error);
-        setTimeout(() => router.push("/tablet/complete"), 2000);
+        setError(error.message);
+
+        // 에러 발생 시 폴백 리뷰 생성
+        const surveyAnswers = JSON.parse(
+          localStorage.getItem("surveyAnswers") || "{}"
+        );
+        const fallbackReview = generateFallbackReview(surveyAnswers);
+        setGeneratedReview(fallbackReview);
+        localStorage.setItem("generatedReview", fallbackReview);
+
+        setTimeout(() => setStatus("preview"), 2000);
       }
     };
 
     generateReview();
   }, [router]);
+
+  // 폴백 리뷰 생성 함수 (API 실패 시)
+  const generateFallbackReview = (surveyData) => {
+    const { satisfaction, comfort, usage, color, language, size } = surveyData;
+
+    const templates = {
+      ko: {
+        start:
+          satisfaction === "매우 만족" || satisfaction === "만족"
+            ? "아식스 노바블라스트 5 정말 만족스럽습니다!"
+            : "아식스 노바블라스트 5 구매했습니다.",
+        comfort:
+          comfort?.length > 0 ? ` ${comfort.join(", ")} 느낌이 좋았어요.` : "",
+        usage:
+          usage?.length > 0
+            ? ` ${usage.join(", ")}할 때 신기 좋을 것 같습니다.`
+            : "",
+        color: color ? ` ${color}이에요.` : "",
+      },
+    };
+
+    const lang = templates[language] || templates.ko;
+    return lang.start + lang.comfort + lang.usage + lang.color;
+  };
 
   const handleConfirm = () => {
     router.push("/tablet/complete");
@@ -75,7 +123,7 @@ export default function GeneratingPage() {
               리뷰가 생성되었습니다!
             </h2>
             <p className="text-sm sm:text-base text-gray-600">
-              생성된 리뷰를 확인하고, 등록해보세요!
+              AI가 생성한 리뷰를 확인하고, 등록해보세요!
             </p>
           </div>
 
@@ -87,8 +135,8 @@ export default function GeneratingPage() {
                   <span className="font-semibold text-gray-900 text-sm sm:text-base">
                     AI 생성 리뷰
                   </span>
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                    자동 생성
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs rounded-full font-medium">
+                    Gemini AI
                   </span>
                 </div>
                 <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
@@ -119,7 +167,7 @@ export default function GeneratingPage() {
             <div className="flex items-start gap-3">
               <div className="text-xs sm:text-sm text-gray-700">
                 <p>
-                  작성한 리뷰는 온라인 앱을 통해 수정하거나 삭제할 수 있습니다.
+                  작성된 리뷰는 온라인 앱을 통해 수정하거나 삭제할 수 있습니다.
                 </p>
               </div>
             </div>
@@ -152,13 +200,13 @@ export default function GeneratingPage() {
         <div className="mb-8">
           <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto relative">
             <div className="absolute inset-0 border-8 border-gray-200 rounded-full"></div>
-            <div className="absolute inset-0 border-8 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 border-8 border-gradient-to-r from-purple-600 to-pink-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
         </div>
 
         {/* 텍스트 */}
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-          AI가 리뷰를 생성하고 있습니다
+          Gemini AI가 리뷰를 생성하고 있습니다
         </h2>
         <p className="text-sm sm:text-base text-gray-600 mb-2">
           고객님의 소중한 의견을 바탕으로
@@ -173,22 +221,22 @@ export default function GeneratingPage() {
             <span className="text-gray-600">설문 분석 중</span>
             <span
               className={`font-semibold ${
-                status === "analyzing" ? "text-gray-400" : "text-blue-600"
+                status === "analyzing" ? "text-gray-400" : "text-purple-600"
               }`}
             >
               {status === "analyzing" ? (
-                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 "✓"
               )}
             </span>
           </div>
           <div className="flex items-center justify-between text-xs sm:text-sm">
-            <span className="text-gray-600">리뷰 생성 중</span>
+            <span className="text-gray-600">AI 리뷰 생성 중</span>
             {status === "generating" ? (
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
             ) : status === "complete" || status === "preview" ? (
-              <span className="text-blue-600 font-semibold">✓</span>
+              <span className="text-purple-600 font-semibold">✓</span>
             ) : (
               <span className="text-gray-400">⋯</span>
             )}
@@ -204,14 +252,23 @@ export default function GeneratingPage() {
               온라인몰 반영 준비
             </span>
             {status === "complete" ? (
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
             ) : status === "preview" ? (
-              <span className="text-blue-600 font-semibold">✓</span>
+              <span className="text-purple-600 font-semibold">✓</span>
             ) : (
               <span className="text-gray-400">⋯</span>
             )}
           </div>
         </div>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-xs text-yellow-800">
+              AI 생성 중 문제가 발생하여 기본 템플릿으로 생성합니다.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
