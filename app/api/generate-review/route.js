@@ -3,16 +3,16 @@ import { NextResponse } from "next/server";
 
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
+// 재시도 관련 유틸리티 함수
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function POST(request) {
-  try {
-    const { surveyData, language } = await request.json();
+  const { surveyData, language } = await request.json();
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-    // ✅ 모델명 변경: gemini-pro → gemini-1.5-flash
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-
-    // 언어별 프롬프트 생성
-    const prompts = {
-      ko: `당신은 자연스러운 쇼핑 리뷰를 작성하는 AI입니다. 다음 설문조사 결과를 바탕으로 아식스 노바블라스트 5 운동화에 대한 자연스럽고 진솔한 리뷰를 작성해주세요.
+  // 언어별 프롬프트 생성
+  const prompts = {
+    ko: `당신은 자연스러운 쇼핑 리뷰를 작성하는 AI입니다. 다음 설문조사 결과를 바탕으로 아식스 노바블라스트 5 운동화에 대한 자연스럽고 진솔한 리뷰를 작성해주세요.
 
 설문 결과:
 - 만족도: ${surveyData.satisfaction}
@@ -30,7 +30,7 @@ export async function POST(request) {
 
 리뷰만 작성해주세요:`,
 
-      zh: `您是一位撰写自然购物评论的AI。请根据以下调查结果，为亚瑟士Novablast 5运动鞋撰写自然真诚的评论。
+    zh: `您是一位撰写自然购物评论的AI。请根据以下调查结果，为亚瑟士Novablast 5运动鞋撰写自然真诚的评论。
 
 调查结果:
 - 满意度: ${surveyData.satisfaction}
@@ -48,7 +48,7 @@ export async function POST(request) {
 
 请只撰写评论:`,
 
-      ja: `あなたは自然なショッピングレビューを書くAIです。以下のアンケート結果に基づいて、アシックスNovablast 5シューズについて自然で誠実なレビューを書いてください。
+    ja: `あなたは自然なショッピングレビューを書くAIです。以下のアンケート結果に基づいて、アシックスNovablast 5シューズについて自然で誠実なレビューを書いてください。
 
 アンケート結果:
 - 満足度: ${surveyData.satisfaction}
@@ -66,7 +66,7 @@ export async function POST(request) {
 
 レビューのみを作成してください:`,
 
-      en: `You are an AI that writes natural shopping reviews. Please write a natural and sincere review for ASICS Novablast 5 shoes based on the following survey results.
+    en: `You are an AI that writes natural shopping reviews. Please write a natural and sincere review for ASICS Novablast 5 shoes based on the following survey results.
 
 Survey Results:
 - Satisfaction: ${surveyData.satisfaction}
@@ -83,20 +83,72 @@ Review Writing Guidelines:
 5. Use polite language
 
 Please write only the review:`,
-    };
+  };
 
-    const prompt = prompts[language] || prompts.ko;
+  const prompt = prompts[language] || prompts.ko;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const review = response.text().trim();
+  // ⭐️ 재시도 횟수 설정
+  const MAX_RETRIES = 3;
+  let lastError = null;
 
-    return NextResponse.json({ review });
-  } catch (error) {
-    console.error("리뷰 생성 오류:", error);
-    return NextResponse.json(
-      { error: "리뷰 생성 중 오류가 발생했습니다." },
-      { status: 500 }
-    );
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      console.log(`[Attempt ${attempt + 1}] Review generation started.`);
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const review = response.text().trim();
+
+      // 성공 시 즉시 반환
+      return NextResponse.json({ review });
+    } catch (error) {
+      lastError = error;
+      console.error(`[Attempt ${attempt + 1}] Error occurred:`, error.message);
+
+      // 429 오류인 경우
+      if (error.status === 429) {
+        // 재시도 횟수를 모두 사용했으면 오류 반환
+        if (attempt === MAX_RETRIES - 1) {
+          console.error("Max retries reached. Returning 429 error.");
+          // 클라이언트에 429 오류를 명확히 전달
+          return NextResponse.json(
+            {
+              error:
+                "할당량 초과로 요청에 실패했습니다. 잠시 후 다시 시도해주세요.",
+            },
+            { status: 429 }
+          );
+        }
+
+        // 지수 백오프 방식의 대기 시간 계산: 2^n * 1000ms + Random Jitter
+        const baseDelay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s, ...
+        const jitter = Math.random() * 500; // 0ms ~ 500ms 랜덤 추가
+        const delay = baseDelay + jitter;
+
+        // API가 제공한 Retry-After 헤더 정보가 있다면 그걸 우선 사용 (SDK가 제공하지 않을 경우를 대비)
+        // 실제로는 error 객체에서 직접 Retry-After를 읽는 것은 복잡하므로, 안전하게 자체 지연 시간을 사용
+
+        console.log(
+          `Rate limit exceeded (429). Retrying in ${Math.floor(
+            delay / 1000
+          )}s...`
+        );
+        await sleep(delay); // 지정된 시간만큼 대기
+        continue; // 다음 반복(재시도)으로 이동
+      } else {
+        // 429가 아닌 다른 오류 (500, 400 등)는 재시도 없이 즉시 실패 처리
+        console.error("Non-429 error. Aborting retries.");
+        return NextResponse.json(
+          { error: "리뷰 생성 중 알 수 없는 오류가 발생했습니다." },
+          { status: 500 }
+        );
+      }
+    }
   }
+
+  // 모든 재시도가 실패했을 경우 (이 코드는 429 분기에서 이미 처리되지만 안전을 위해 남겨둠)
+  return NextResponse.json(
+    { error: "리뷰 생성에 실패했습니다. 서버 로그를 확인하세요." },
+    { status: 500 }
+  );
 }
